@@ -56,7 +56,10 @@ This project uses [Laravel Sanctum](https://laravel.com/docs/sanctum) for API au
 ## Testing the API with the Pre-built Frontend
 
 1. **Ensure the backend (API) is running** as described above.
-2. **Navigate to the frontend directory**.
+2. **Navigate to the frontend repository and clone the code using git clone**.
+```bash
+   git clone https://github.com/CodeArchitectSam/TaskAPI-frontend.git
+   ```
 3. **Install frontend dependencies and run the frontend:**
    ```bash
    npm install
@@ -85,4 +88,4 @@ This project uses [Laravel Sanctum](https://laravel.com/docs/sanctum) for API au
 - For API testing, you can also use Postman or similar tools. Remember to set the `Accept: application/json` header for proper responses.
 
 ## Screenshots
-- Check the screenshots folder
+- Check the public/screenshots folder
