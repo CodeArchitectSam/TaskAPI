@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\API;
 
 use App\Http\Controllers\Controller;
+use App\Http\Traits\ApiResponse;
 use App\Models\Task;
 use App\Http\Requests\ListTaskRequest;
 use App\Http\Requests\StoreTaskRequest;
@@ -11,63 +12,47 @@ use App\Http\Resources\TaskResource;
 
 class TaskController extends Controller
 {
-    protected $tasksPerPage = 10;
+    use ApiResponse;
 
     public function index(ListTaskRequest $request)
     {
         $query = Task::query()
             ->filterByStatus($request->status)
-            ->filterByDueDate($request->due_date, $request->due_date_from, $request->due_date_to);
+            ->filterByDueDate($request->due_date, $request->due_date_from, $request->due_date_to)
+            ->applySort($request->sort_by, $request->get('sort_order', 'asc'));
 
-        if ($request->has('sort_by')) {
-            $query->orderBy($request->sort_by, $request->get('sort_order', 'asc'));
-        }
-
-        $perPage = $request->get('per_page', $this->tasksPerPage);
+        $perPage = $request->get('per_page', config('api.tasks_per_page'));
+        $paginator = $query->paginate($perPage);
         
-        return TaskResource::collection($query->paginate($perPage));
+        return $this->success(
+            $this->formatPaginatedResponse(TaskResource::collection($paginator), $paginator),
+            'Tasks retrieved successfully'
+        );
     }
 
     public function store(StoreTaskRequest $request)
     {
         $task = Task::create($request->validated());
 
-        return (new TaskResource($task))->response()->setStatusCode(201);
+        return $this->success(new TaskResource($task), 'Task created successfully', 201);
     }
 
-    public function show($id)
+    public function show(Task $task)
     {
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
-        
-        return new TaskResource($task);
+        return $this->success(new TaskResource($task), 'Task retrieved successfully');
     }
 
-    public function update(UpdateTaskRequest $request, $id)
+    public function update(UpdateTaskRequest $request, Task $task)
     {
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
-
         $task->update($request->validated());
-        return (new TaskResource($task))->response()->setStatusCode(200);
+
+        return $this->success(new TaskResource($task), 'Task updated successfully');
     }
 
-    public function destroy($id)
+    public function destroy(Task $task)
     {
-        $task = Task::find($id);
-
-        if (!$task) {
-            return response()->json(['message' => 'Task not found'], 404);
-        }
-
         $task->delete();
 
-        return response()->json(['message' => 'Task deleted successfully'], 204);
+        return $this->success(null, 'Task deleted successfully');
     }
 }
